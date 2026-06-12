@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM 2026 - Knockout Bracket</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e94560;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+
+        .bracket-container {
+            padding: 30px;
+            overflow-x: auto;
+            overflow-y: auto;
+            height: calc(100vh - 60px);
+        }
+
+        .bracket {
+            display: flex;
+            align-items: stretch;
+            gap: 40px;
+            min-width: fit-content;
+        }
+
+        .round {
+            display: flex;
+            flex-direction: column;
+            min-width: 230px;
+        }
+
+        .round-title {
+            text-align: center;
+            font-size: 0.85rem;
+            color: #e94560;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            padding: 6px;
+            background: rgba(233, 69, 96, 0.1);
+            border-radius: 4px;
+        }
+
+        .round-matches {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex: 1;
+            gap: 8px;
+        }
+
+        .bracket-match {
+            background: #16213e;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid #2a3a5e;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+
+        .bracket-match:hover {
+            transform: scale(1.02);
+            border-color: #4a6a9e;
+        }
+
+        .bracket-match.live {
+            border-color: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .bracket-match.finished {
+            border-color: #555;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.3); }
+            50% { box-shadow: 0 0 8px 2px rgba(76, 175, 80, 0.2); }
+        }
+
+        .bracket-team {
+            display: flex;
+            align-items: center;
+            padding: 6px 10px;
+            gap: 6px;
+            border-bottom: 1px solid #1a1a2e;
+        }
+
+        .bracket-team:last-child {
+            border-bottom: none;
+        }
+
+        .bracket-team.winner {
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .bracket-team img {
+            width: 22px;
+            height: 15px;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+
+        .bracket-team-name {
+            flex: 1;
+            font-size: 0.75rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bracket-team-score {
+            font-size: 0.8rem;
+            font-weight: 700;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .bracket-match-info {
+            text-align: center;
+            font-size: 0.6rem;
+            color: #888;
+            padding: 2px 6px;
+            background: #111827;
+        }
+
+        .bracket-match-info .live-indicator {
+            color: #4caf50;
+            font-weight: 600;
+        }
+
+        .match-id-label {
+            font-size: 0.55rem;
+            color: #555;
+        }
+
+        .back-link {
+            color: #64b5f6;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-matches {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-size: 1rem;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        .update-info {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚽ VM 2026 - Slutrunde</h1>
+        <div>
+            <a href="index.html" class="back-link">← Dashboard</a>
+            <span class="update-info" style="margin-left: 20px;">Sidst opdateret: <span id="last-update">-</span></span>
+        </div>
+    </header>
+    <div class="bracket-container">
+        <div id="bracket" class="bracket">
+            <div class="no-matches">Henter data...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://worldcup26.ir/get/games';
+        const FLAG_PATH = 'Flags/';
+
+        const flagNameMap = {
+            'Curaçao': 'Curacao',
+            'Czech Republic': 'Czechia',
+            'Democratic Republic of the Congo': 'DR Congo'
+        };
+
+        const stadiumMap = {
+            1:  { city: 'Mexico City', offset: 8 },
+            2:  { city: 'Guadalajara', offset: 8 },
+            3:  { city: 'Monterrey', offset: 9 },
+            4:  { city: 'Dallas', offset: 7 },
+            5:  { city: 'Houston', offset: 7 },
+            6:  { city: 'Kansas City', offset: 7 },
+            7:  { city: 'Atlanta', offset: 6 },
+            8:  { city: 'Miami', offset: 6 },
+            9:  { city: 'Boston', offset: 6 },
+            10: { city: 'Philadelphia', offset: 6 },
+            11: { city: 'New York/New Jersey', offset: 6 },
+            12: { city: 'Toronto', offset: 6 },
+            13: { city: 'Vancouver', offset: 9 },
+            14: { city: 'Seattle', offset: 9 },
+            15: { city: 'San Francisco', offset: 9 },
+            16: { city: 'Los Angeles', offset: 9 }
+        };
+
+        function getFlagSrc(teamName) {
+            const mapped = flagNameMap[teamName] || teamName;
+            return `${FLAG_PATH}${mapped}.png`;
+        }
+
+        function parseDate(dateStr) {
+            const [datePart, timePart] = dateStr.trim().split(' ');
+            const [month, day, year] = datePart.split('/');
+            const [hours, minutes] = timePart.split(':');
+            return new Date(year, month - 1, day, hours, minutes);
+        }
+
+        function convertToDanishTime(dateStr, stadiumId) {
+            const stadium = stadiumMap[stadiumId];
+            if (!stadium) return parseDate(dateStr);
+            const date = parseDate(dateStr);
+            date.setHours(date.getHours() + stadium.offset);
+            return date;
+        }
+
+        function formatDateTime(date) {
+            const day = date.getDate();
+            const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            return `${day}. ${months[date.getMonth()]} ${h}:${m}`;
+        }
+
+        function getMatchStatus(game, matchDate) {
+            const now = new Date();
+            if (game.finished === 'TRUE') return 'finished';
+            if (game.time_elapsed && game.time_elapsed !== 'notstarted') return 'live';
+            if (matchDate < now) return 'live';
+            return 'upcoming';
+        }
+
+        function renderBracket(games) {
+            const knockoutGames = games.filter(g => g.type !== 'group');
+
+            if (knockoutGames.length === 0) {
+                document.getElementById('bracket').innerHTML = '<div class="no-matches">Ingen knockout-kampe endnu</div>';
+                return;
+            }
+
+            const rounds = {
+                'r32': { title: '1/16-finaler', games: [] },
+                'r16': { title: '1/8-finaler', games: [] },
+                'qf': { title: 'Kvartfinaler', games: [] },
+                'sf': { title: 'Semifinaler', games: [] },
+                'final': { title: 'Finale', games: [] }
+            };
+
+            for (const game of knockoutGames) {
+                if (game.type !== 'third') {
+                    rounds[game.type].games.push(game);
+                }
+            }
+
+            let html = '';
+
+            for (const [type, round] of Object.entries(rounds)) {
+                if (round.games.length === 0) continue;
+
+                round.games.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+                html += `<div class="round">`;
+                html += `<div class="round-title">${round.title}</div>`;
+                html += `<div class="round-matches">`;
+
+                for (const game of round.games) {
+                    const matchDate = convertToDanishTime(game.local_date, game.stadium_id);
+                    const status = getMatchStatus(game, matchDate);
+
+                    const homeName = game.home_team_name_en || game.home_team_label || 'TBD';
+                    const awayName = game.away_team_name_en || game.away_team_label || 'TBD';
+                    const homeFlag = game.home_team_name_en ? `<img src="${getFlagSrc(game.home_team_name_en)}" alt="">` : '';
+                    const awayFlag = game.away_team_name_en ? `<img src="${getFlagSrc(game.away_team_name_en)}" alt="">` : '';
+
+                    const hs = parseInt(game.home_score);
+                    const as = parseInt(game.away_score);
+                    const homeWinner = game.finished === 'TRUE' && hs > as;
+                    const awayWinner = game.finished === 'TRUE' && as > hs;
+
+                    const homeScore = status !== 'upcoming' ? game.home_score : '';
+                    const awayScore = status !== 'upcoming' ? game.away_score : '';
+
+                    let infoContent = '';
+                    if (status === 'live') {
+                        infoContent = `<span class="live-indicator">● LIVE ${game.time_elapsed !== 'notstarted' ? game.time_elapsed : ''}</span>`;
+                    } else {
+                        infoContent = formatDateTime(matchDate);
+                    }
+
+                    html += `
+                        <div class="bracket-match ${status}">
+                            <div class="bracket-match-info">
+                                <span class="match-id-label">Kamp ${game.id}</span> · ${infoContent}
+                            </div>
+                            <div class="bracket-team ${homeWinner ? 'winner' : ''}">
+                                ${homeFlag}
+                                <span class="bracket-team-name">${homeName}</span>
+                                <span class="bracket-team-score">${homeScore}</span>
+                            </div>
+                            <div class="bracket-team ${awayWinner ? 'winner' : ''}">
+                                ${awayFlag}
+                                <span class="bracket-team-name">${awayName}</span>
+                                <span class="bracket-team-score">${awayScore}</span>
+                            </div>
+                        </div>`;
+                }
+
+                html += `</div></div>`;
+            }
+
+            document.getElementById('bracket').innerHTML = html;
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch(API_URL);
+                const data = await res.json();
+                renderBracket(data.games);
+
+                document.getElementById('last-update').textContent =
+                    new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+            } catch (err) {
+                console.error('Fejl ved hentning af data:', err);
+                document.getElementById('bracket').innerHTML =
+                    '<div class="no-matches">Kunne ikke hente data. Prøver igen om 1 time.</div>';
+            }
+        }
+
+        fetchData();
+        setInterval(fetchData, 3600000);
+    </script>
+</body>
+</html>
