@@ -195,6 +195,34 @@
             font-size: 0.8rem;
             color: #aaa;
         }
+
+        .bracket-match-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .match-scorers {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            min-width: 100px;
+            max-width: 150px;
+        }
+
+        .match-scorers .scorers-team {
+            font-size: 0.6rem;
+            color: #aaa;
+            line-height: 1.3;
+            padding: 2px 0;
+        }
+
+        .match-scorers .scorer-name {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
     </style>
 </head>
 <body>
@@ -333,21 +361,33 @@
                         infoContent = formatDateTime(matchDate);
                     }
 
+                    const homeScorers = Array.isArray(game.home_scorers) ? game.home_scorers : [];
+                    const awayScorers = Array.isArray(game.away_scorers) ? game.away_scorers : [];
+                    const homeScorersHtml = homeScorers.map(s => `<span class="scorer-name">⚽ ${s}</span>`).join('');
+                    const awayScorersHtml = awayScorers.map(s => `<span class="scorer-name">⚽ ${s}</span>`).join('');
+
                     html += `
-                        <div class="bracket-match ${status}">
-                            <div class="bracket-match-info">
-                                <span class="match-id-label">Kamp ${game.id}</span> · ${infoContent}
+                        <div class="bracket-match-wrapper">
+                            <div class="bracket-match ${status}">
+                                <div class="bracket-match-info">
+                                    <span class="match-id-label">Kamp ${game.id}</span> · ${infoContent}
+                                </div>
+                                <div class="bracket-team ${homeWinner ? 'winner' : ''}">
+                                    ${homeFlag}
+                                    <span class="bracket-team-name">${homeName}</span>
+                                    <span class="bracket-team-score">${homeScore}</span>
+                                </div>
+                                <div class="bracket-team ${awayWinner ? 'winner' : ''}">
+                                    ${awayFlag}
+                                    <span class="bracket-team-name">${awayName}</span>
+                                    <span class="bracket-team-score">${awayScore}</span>
+                                </div>
                             </div>
-                            <div class="bracket-team ${homeWinner ? 'winner' : ''}">
-                                ${homeFlag}
-                                <span class="bracket-team-name">${homeName}</span>
-                                <span class="bracket-team-score">${homeScore}</span>
-                            </div>
-                            <div class="bracket-team ${awayWinner ? 'winner' : ''}">
-                                ${awayFlag}
-                                <span class="bracket-team-name">${awayName}</span>
-                                <span class="bracket-team-score">${awayScore}</span>
-                            </div>
+                            ${(homeScorersHtml || awayScorersHtml) ? `
+                            <div class="match-scorers">
+                                <div class="scorers-team">${homeScorersHtml}</div>
+                                <div class="scorers-team">${awayScorersHtml}</div>
+                            </div>` : ''}
                         </div>`;
                 }
 

@@ -294,7 +294,7 @@
 </head>
 <body>
     <header>
-        <h1>⚽ FIFA VM 2026</h1>
+        <h1>⚽ VM 2026 Dashboard</h1>
         <div class="update-info">Opdaterer hver time | Sidst opdateret: <span id="last-update">-</span></div>
     </header>
     <div class="container">
@@ -440,15 +440,17 @@
                     ? `<div class="knockout-label">${game.type.toUpperCase()}</div>`
                     : `<div class="match-group-tag">Gruppe ${game.group}</div>`;
 
-                const homeScorers = game.home_scorers && game.home_scorers !== 'null' ? game.home_scorers : '';
-                const awayScorers = game.away_scorers && game.away_scorers !== 'null' ? game.away_scorers : '';
+                const homeScorers = JSON.parse(game.home_scorers.replace(/[“”]/g, '"').replace(/^{/, '[').replace(/}$/, ']'));
+                const awayScorers = JSON.parse(game.away_scorers.replace(/[“”]/g, '"').replace(/^{/, '[').replace(/}$/, ']'));
+                const homeScorersHtml = homeScorers ? homeScorers.map(s => `<div>⚽ ${s}</div>`).join('') : '';
+                const awayScorersHtml = awayScorers ? awayScorers.map(s => `<div>⚽ ${s}</div>`).join('') : '';
 
                 html += `
                     <div class="match-card ${status}">
                         <div class="team home">
                             <span class="team-name">${homeName}</span>
                             ${homeFlag}
-                            ${homeScorers ? `<div class="scorers home-scorers">${homeScorers}</div>` : ''}
+                            ${homeScorersHtml ? `<div class="scorers home-scorers">${homeScorersHtml}</div>` : ''}
                         </div>
                         <div class="score-box">
                             ${scoreDisplay}
@@ -458,7 +460,7 @@
                         <div class="team away">
                             ${awayFlag}
                             <span class="team-name">${awayName}</span>
-                            ${awayScorers ? `<div class="scorers away-scorers">${awayScorers}</div>` : ''}
+                            ${awayScorersHtml ? `<div class="scorers away-scorers">${awayScorersHtml}</div>` : ''}
                         </div>
                     </div>`;
             }

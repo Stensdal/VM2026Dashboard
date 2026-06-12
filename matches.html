@@ -107,6 +107,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .team.home {
@@ -202,6 +203,31 @@
             font-style: italic;
         }
 
+        .scorers {
+            font-size: 0.65rem;
+            color: #aaa;
+            width: 100%;
+            margin-top: 2px;
+        }
+
+        .home-scorers {
+            text-align: right;
+        }
+
+        .away-scorers {
+            text-align: left;
+        }
+
+        .back-link {
+            color: #64b5f6;
+            text-decoration: none;
+            font-size: 0.85rem;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
         #groups-list {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -212,7 +238,10 @@
 <body>
     <header>
         <h1>⚽ FIFA VM 2026</h1>
-        <div class="update-info">Opdaterer hver time | Sidst opdateret: <span id="last-update">-</span></div>
+        <div>
+            <a href="index.html" class="back-link">← Dashboard</a>
+            <span class="update-info" style="margin-left: 20px;">Sidst opdateret: <span id="last-update">-</span></span>
+        </div>
     </header>
     <div class="container">
         <div class="matches-panel" id="matches-panel">
@@ -342,11 +371,17 @@
                     ? `<div class="knockout-label">${game.type.toUpperCase()}</div>`
                     : `<div class="match-group-tag">Gruppe ${game.group}</div>`;
 
+                const homeScorers = JSON.parse(game.home_scorers.replace(/[“”]/g, '"').replace(/^{/, '[').replace(/}$/, ']'));
+                const awayScorers = JSON.parse(game.away_scorers.replace(/[“”]/g, '"').replace(/^{/, '[').replace(/}$/, ']'));
+                const homeScorersHtml = homeScorers ? homeScorers.map(s => `<div>⚽ ${s}</div>`).join('') : '';
+                const awayScorersHtml = awayScorers ? awayScorers.map(s => `<div>⚽ ${s}</div>`).join('') : '';
+
                 html += `
                     <div class="match-card ${status}">
                         <div class="team home">
                             <span class="team-name">${homeName}</span>
                             ${homeFlag}
+                            ${homeScorersHtml ? `<div class="scorers home-scorers">${homeScorersHtml}</div>` : ''}
                         </div>
                         <div class="score-box">
                             ${scoreDisplay}
@@ -356,6 +391,7 @@
                         <div class="team away">
                             ${awayFlag}
                             <span class="team-name">${awayName}</span>
+                            ${awayScorersHtml ? `<div class="scorers away-scorers">${awayScorersHtml}</div>` : ''}
                         </div>
                     </div>`;
             }
