@@ -471,6 +471,7 @@
         function renderGroups(groupsData, teamNameMap) {
             const sorted = groupsData.sort((a, b) => a.name.localeCompare(b.name));
             let html = '';
+            let thirds = [];
 
             for (const group of sorted) {
                 const teams = group.teams.sort((a, b) => {
@@ -478,6 +479,9 @@
                     if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
                     return parseInt(b.gf) - parseInt(a.gf);
                 });
+
+                // Collect third-placed teams
+                thirds.push({ ...teams[2], groupName: group.name });
 
                 html += `
                     <div class="group-container">
@@ -500,6 +504,35 @@
                         </table>
                     </div>`;
             }
+
+            // Build table of third-placed teams (best 8 of 12 qualify)
+            thirds.sort((a, b) => {
+                if (b.pts !== a.pts) return parseInt(b.pts) - parseInt(a.pts);
+                if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
+                return parseInt(b.gf) - parseInt(a.gf);
+            });
+
+            html += `
+                <div class="group-container">
+                    <div class="group-title">Bedste treere</div>
+                    <table class="group-table">
+                        <tr><th>Gr.</th><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>MF</th><th>P</th></tr>
+                        ${thirds.map((t, i) => {
+                            const name = teamNameMap[t.team_id] || `Team ${t.team_id}`;
+                            return `
+                            <tr class="${i < 8 ? 'qualified' : ''}">
+                                <td>${t.groupName}</td>
+                                <td><div class="team-row"><img src="${getFlagSrc(name)}" alt="">${name}</div></td>
+                                <td>${t.mp}</td>
+                                <td>${t.w}</td>
+                                <td>${t.d}</td>
+                                <td>${t.l}</td>
+                                <td>${t.gf}-${t.ga}</td>
+                                <td><strong>${t.pts}</strong></td>
+                            </tr>`;
+                        }).join('')}
+                    </table>
+                </div>`;
 
             document.getElementById('groups-list').innerHTML = html;
         }
