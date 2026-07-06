@@ -40,7 +40,7 @@
 
         .container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 40% 60%;
             height: calc(100vh - 60px);
             gap: 0;
         }
@@ -50,10 +50,10 @@
             overflow-y: auto;
         }
 
-        .groups-panel {
+        .knockout-panel {
             background: #16213e;
             padding: 15px;
-            overflow-y: auto;
+            overflow: auto;
             border-left: 1px solid #333;
         }
 
@@ -169,65 +169,6 @@
             text-align: center;
         }
 
-        /* Group standings */
-        .group-container {
-            margin-bottom: 14px;
-        }
-
-        .group-title {
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: #64b5f6;
-            margin-bottom: 5px;
-            padding: 4px 8px;
-            background: rgba(100, 181, 246, 0.1);
-            border-radius: 4px;
-        }
-
-        .group-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.75rem;
-        }
-
-        .group-table th {
-            color: #888;
-            text-align: center;
-            padding: 3px 4px;
-            font-weight: 500;
-        }
-
-        .group-table th:first-child {
-            text-align: left;
-        }
-
-        .group-table td {
-            padding: 3px 4px;
-            text-align: center;
-            border-top: 1px solid #222;
-        }
-
-        .group-table td:first-child {
-            text-align: left;
-        }
-
-        .group-table tr.qualified td {
-            color: #4caf50;
-        }
-
-        .team-row {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .team-row img {
-            width: 18px;
-            height: 13px;
-            object-fit: cover;
-            border-radius: 1px;
-        }
-
         .no-matches {
             text-align: center;
             color: #666;
@@ -270,12 +211,6 @@
             text-align: left;
         }
 
-        #groups-list {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
         .btn-all-matches {
             font-size: 0.7rem;
             background: #e94560;
@@ -290,6 +225,116 @@
         .btn-all-matches:hover {
             background: #d32f2f;
         }
+
+        /* Compact knockout bracket tree */
+        .ko-bracket {
+            display: flex;
+            align-items: stretch;
+            gap: 18px;
+            min-width: fit-content;
+            height: 100%;
+        }
+
+        .ko-round {
+            display: flex;
+            flex-direction: column;
+            min-width: 150px;
+        }
+
+        .ko-round-title {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #ff9800;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            padding: 4px;
+            background: rgba(255, 152, 0, 0.1);
+            border-radius: 4px;
+        }
+
+        .ko-round-matches {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            flex: 1;
+            gap: 6px;
+        }
+
+        .ko-match {
+            background: #1a2744;
+            border-radius: 5px;
+            overflow: hidden;
+            border: 1px solid #2a3a5e;
+        }
+
+        .ko-match.live {
+            border-color: #4caf50;
+            animation: pulse 2s infinite;
+        }
+
+        .ko-match.finished {
+            border-color: #555;
+        }
+
+        .ko-team {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 6px;
+            border-bottom: 1px solid #16213e;
+        }
+
+        .ko-team:last-child {
+            border-bottom: none;
+        }
+
+        .ko-team.winner {
+            background: rgba(76, 175, 80, 0.25);
+        }
+
+        .ko-team img {
+            width: 16px;
+            height: 12px;
+            object-fit: cover;
+            border-radius: 1px;
+            flex-shrink: 0;
+        }
+
+        .ko-team-name {
+            flex: 1;
+            font-size: 0.7rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .ko-team.winner .ko-team-name {
+            color: #4caf50;
+            font-weight: 700;
+        }
+
+        .ko-team-score {
+            font-size: 0.7rem;
+            font-weight: 700;
+            min-width: 14px;
+            text-align: center;
+        }
+
+        .ko-meta {
+            font-size: 0.55rem;
+            color: #888;
+            text-align: center;
+            padding: 2px 4px;
+            background: #111827;
+        }
+
+        .ko-meta .live-indicator {
+            color: #4caf50;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -301,17 +346,16 @@
         <div class="matches-panel" id="matches-panel">
             <div class="section-title">Kampe (±2 dage)</div>
             <div id="matches-list"><div class="no-matches">Henter data...</div></div>
-            <div class="section-title"><a href="./matches.html" class="btn-all-matches">Alle kampe</a><a href="./knockout.html" class="btn-all-matches">Knockout kampe</a></div>
+            <div class="section-title"><a href="./matches.html" class="btn-all-matches">Alle kampe</a><a href="./knockout.html" class="btn-all-matches">Knockout kampe</a><a href="./groups.html" class="btn-all-matches">Gruppeoversigt</a></div>
         </div>
-        <div class="groups-panel" id="groups-panel">
-            <div class="section-title">Gruppeoversigt</div>
-            <div id="groups-list"></div>
+        <div class="knockout-panel" id="knockout-panel">
+            <div class="section-title">Slutrunde</div>
+            <div id="knockout-summary"><div class="no-matches">Henter data...</div></div>
         </div>
     </div>
 
     <script>
         const API_URL = 'https://worldcup26.ir/get/games';
-        const GROUPS_API_URL = 'https://worldcup26.ir/get/groups';
         const FLAG_PATH = 'Flags/';
 
         // Map API team names to flag file names
@@ -468,94 +512,135 @@
             document.getElementById('matches-list').innerHTML = html;
         }
 
-        function renderGroups(groupsData, teamNameMap) {
-            const sorted = groupsData.sort((a, b) => a.name.localeCompare(b.name));
-            let html = '';
-            let thirds = [];
+        function formatDateTime(date) {
+            const day = date.getDate();
+            const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec'];
+            const h = String(date.getHours()).padStart(2, '0');
+            const m = String(date.getMinutes()).padStart(2, '0');
+            return `${day}. ${months[date.getMonth()]} ${h}:${m}`;
+        }
 
-            for (const group of sorted) {
-                const teams = group.teams.sort((a, b) => {
-                    if (b.pts !== a.pts) return parseInt(b.pts) - parseInt(a.pts);
-                    if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
-                    return parseInt(b.gf) - parseInt(a.gf);
-                });
+        function renderKnockoutSummary(games) {
+            const knockoutGames = games.filter(g => g.type !== 'group');
 
-                // Collect third-placed teams
-                thirds.push({ ...teams[2], groupName: group.name });
-
-                html += `
-                    <div class="group-container">
-                        <div class="group-title">Gruppe ${group.name}</div>
-                        <table class="group-table">
-                            <tr><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>MF</th><th>P</th></tr>
-                            ${teams.map((t, i) => {
-                                const name = teamNameMap[t.team_id] || `Team ${t.team_id}`;
-                                return `
-                                <tr class="${i < 2 ? 'qualified' : ''}">
-                                    <td><div class="team-row"><img src="${getFlagSrc(name)}" alt="">${name}</div></td>
-                                    <td>${t.mp}</td>
-                                    <td>${t.w}</td>
-                                    <td>${t.d}</td>
-                                    <td>${t.l}</td>
-                                    <td>${t.gf}-${t.ga}</td>
-                                    <td><strong>${t.pts}</strong></td>
-                                </tr>`;
-                            }).join('')}
-                        </table>
-                    </div>`;
+            if (knockoutGames.length === 0) {
+                document.getElementById('knockout-summary').innerHTML = '<div class="no-matches">Ingen knockout-kampe endnu</div>';
+                return;
             }
 
-            // Build table of third-placed teams (best 8 of 12 qualify)
-            thirds.sort((a, b) => {
-                if (b.pts !== a.pts) return parseInt(b.pts) - parseInt(a.pts);
-                if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
-                return parseInt(b.gf) - parseInt(a.gf);
-            });
+            const rounds = {
+                'r32': { title: '1/16-finaler', games: [] },
+                'r16': { title: '1/8-finaler', games: [] },
+                'qf': { title: 'Kvartfinaler', games: [] },
+                'sf': { title: 'Semifinaler', games: [] },
+                'third': { title: 'Bronzekamp', games: [] },
+                'final': { title: 'Finale', games: [] }
+            };
 
-            html += `
-                <div class="group-container">
-                    <div class="group-title">Bedste treere</div>
-                    <table class="group-table">
-                        <tr><th>Gr.</th><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>MF</th><th>P</th></tr>
-                        ${thirds.map((t, i) => {
-                            const name = teamNameMap[t.team_id] || `Team ${t.team_id}`;
-                            return `
-                            <tr class="${i < 8 ? 'qualified' : ''}">
-                                <td>${t.groupName}</td>
-                                <td><div class="team-row"><img src="${getFlagSrc(name)}" alt="">${name}</div></td>
-                                <td>${t.mp}</td>
-                                <td>${t.w}</td>
-                                <td>${t.d}</td>
-                                <td>${t.l}</td>
-                                <td>${t.gf}-${t.ga}</td>
-                                <td><strong>${t.pts}</strong></td>
-                            </tr>`;
-                        }).join('')}
-                    </table>
-                </div>`;
+            for (const game of knockoutGames) {
+                if (rounds[game.type]) rounds[game.type].games.push(game);
+            }
 
-            document.getElementById('groups-list').innerHTML = html;
+            let html = '<div class="ko-bracket">';
+
+            for (const round of Object.values(rounds)) {
+                if (round.games.length === 0) continue;
+
+                round.games.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+
+                html += `<div class="ko-round"><div class="ko-round-title">${round.title}</div><div class="ko-round-matches">`;
+
+                for (const game of round.games) {
+                    const matchDate = convertToDanishTime(game.local_date, game.stadium_id);
+                    const status = getMatchStatus(game, matchDate);
+
+                    const homeName = game.home_team_name_en || game.home_team_label || 'TBD';
+                    const awayName = game.away_team_name_en || game.away_team_label || 'TBD';
+                    const homeFlag = game.home_team_name_en ? `<img src="${getFlagSrc(game.home_team_name_en)}" alt="">` : '';
+                    const awayFlag = game.away_team_name_en ? `<img src="${getFlagSrc(game.away_team_name_en)}" alt="">` : '';
+
+                    const hs = parseInt(game.home_score);
+                    const as = parseInt(game.away_score);
+                    const homeWinner = game.finished === 'TRUE' && hs > as;
+                    const awayWinner = game.finished === 'TRUE' && as > hs;
+
+                    const homeScore = status !== 'upcoming' ? game.home_score : '';
+                    const awayScore = status !== 'upcoming' ? game.away_score : '';
+
+                    const meta = status === 'live'
+                        ? `<span class="live-indicator">● LIVE ${game.time_elapsed !== 'notstarted' ? game.time_elapsed : ''}</span>`
+                        : status === 'upcoming'
+                            ? `Kamp ${game.id} · ${formatDateTime(matchDate)}`
+                            : formatDateTime(matchDate);
+
+                    html += `
+                        <div class="ko-match ${status}">
+                            <div class="ko-team ${homeWinner ? 'winner' : ''}">
+                                ${homeFlag}<span class="ko-team-name">${homeName}</span><span class="ko-team-score">${homeScore}</span>
+                            </div>
+                            <div class="ko-team ${awayWinner ? 'winner' : ''}">
+                                ${awayFlag}<span class="ko-team-name">${awayName}</span><span class="ko-team-score">${awayScore}</span>
+                            </div>
+                            <div class="ko-meta">${meta}</div>
+                        </div>`;
+                }
+
+                html += `</div></div>`;
+            }
+
+            html += '</div>';
+
+            document.getElementById('knockout-summary').innerHTML = html;
+        }
+
+        function renderGoalScorers(games) {
+            const scorersMap = {};
+
+            for (const game of games) {
+                const homeScorers = (!game.home_scorers || game.home_scorers === 'null')
+                    ? []
+                    : game.home_scorers
+                        .replace(/^{|}$/g, '')
+                        .split(/","/)
+                        .map(s => s.replace(/^"|"$/g, '').replace(/\s\d+(?:\+\d+)?'\s*$/, ''))
+
+                const awayScorers = (!game.away_scorers || game.away_scorers === 'null')
+                    ? null
+                    : game.away_scorers
+                        .replace(/^{|}$/g, '')
+                        .split(/","/)
+                        .map(s => s.replace(/^"|"$/g, '').replace(/\s\d+(?:\+\d+)?'\s*$/, ''))
+
+                if (homeScorers) {
+                    for (const scorer of homeScorers) {
+                        scorersMap[scorer] = (scorersMap[scorer] || 0) + 1;
+                    }
+                }
+
+                if (awayScorers) {
+                    for (const scorer of awayScorers) {
+                        scorersMap[scorer] = (scorersMap[scorer] || 0) + 1;
+                    }
+                }
+            }
+
+            const sortedScorers = Object.entries(scorersMap)
+                .sort((a, b) => b[1] - a[1])
+                .map(([name, goals]) => ({ name, goals }));
+
+            return sortedScorers;       
         }
 
         async function fetchData() {
             try {
-                const [gamesRes, groupsRes] = await Promise.all([
-                    fetch(API_URL),
-                    fetch(GROUPS_API_URL)
-                ]);
+                const gamesRes = await fetch(API_URL);
                 const gamesData = await gamesRes.json();
-                const groupsData = await groupsRes.json();
                 const games = gamesData.games;
 
-                // Build team_id → name map from games data
-                const teamNameMap = {};
-                for (const g of games) {
-                    if (g.home_team_id && g.home_team_name_en) teamNameMap[g.home_team_id] = g.home_team_name_en;
-                    if (g.away_team_id && g.away_team_name_en) teamNameMap[g.away_team_id] = g.away_team_name_en;
-                }
-
                 renderMatches(games);
-                renderGroups(groupsData.groups, teamNameMap);
+                renderKnockoutSummary(games);
+                // const goalScorers = renderGoalScorers(games);
+                // console.log('Goal Scorers:', goalScorers);
 
                 document.getElementById('last-update').textContent =
                     new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });

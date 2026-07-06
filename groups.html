@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM 2026 - Gruppeoversigt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #16213e, #0f3460);
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e94560;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        header h1 {
+            font-size: 1.6rem;
+            color: #fff;
+        }
+
+        .back-link {
+            font-size: 0.8rem;
+            color: #eee;
+            text-decoration: none;
+            opacity: 0.85;
+        }
+
+        .back-link:hover {
+            opacity: 1;
+        }
+
+        .update-info {
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+
+        .groups-container {
+            padding: 20px 25px;
+        }
+
+        #groups-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+        }
+
+        /* Group standings */
+        .group-container {
+            margin-bottom: 14px;
+        }
+
+        .group-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #64b5f6;
+            margin-bottom: 6px;
+            padding: 5px 8px;
+            background: rgba(100, 181, 246, 0.1);
+            border-radius: 4px;
+        }
+
+        .group-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+        }
+
+        .group-table th {
+            color: #888;
+            text-align: center;
+            padding: 4px 5px;
+            font-weight: 500;
+        }
+
+        .group-table th:first-child {
+            text-align: left;
+        }
+
+        .group-table td {
+            padding: 4px 5px;
+            text-align: center;
+            border-top: 1px solid #222;
+        }
+
+        .group-table td:first-child {
+            text-align: left;
+        }
+
+        .group-table tr.qualified td {
+            color: #4caf50;
+        }
+
+        .team-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .team-row img {
+            width: 20px;
+            height: 14px;
+            object-fit: cover;
+            border-radius: 1px;
+        }
+
+        .no-matches {
+            text-align: center;
+            color: #666;
+            padding: 40px;
+            font-size: 1rem;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a2e;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 1100px) {
+            #groups-list {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            #groups-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>⚽ VM 2026 - Gruppeoversigt</h1>
+        <div>
+            <a href="index.html" class="back-link">← Dashboard</a>
+            <span class="update-info" style="margin-left: 20px;">Sidst opdateret: <span id="last-update">-</span></span>
+        </div>
+    </header>
+    <div class="groups-container">
+        <div id="groups-list"><div class="no-matches">Henter data...</div></div>
+    </div>
+
+    <script>
+        const GROUPS_API_URL = 'https://worldcup26.ir/get/groups';
+        const API_URL = 'https://worldcup26.ir/get/games';
+        const FLAG_PATH = 'Flags/';
+
+        // Map API team names to flag file names
+        const flagNameMap = {
+            'Curaçao': 'Curacao',
+            'Czech Republic': 'Czechia',
+            'Democratic Republic of the Congo': 'DR Congo'
+        };
+
+        function getFlagSrc(teamName) {
+            const mapped = flagNameMap[teamName] || teamName;
+            return `${FLAG_PATH}${mapped}.png`;
+        }
+
+        function renderGroups(groupsData, teamNameMap) {
+            const sorted = groupsData.sort((a, b) => a.name.localeCompare(b.name));
+            let html = '';
+            let thirds = [];
+
+            for (const group of sorted) {
+                const teams = group.teams.sort((a, b) => {
+                    if (b.pts !== a.pts) return parseInt(b.pts) - parseInt(a.pts);
+                    if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
+                    return parseInt(b.gf) - parseInt(a.gf);
+                });
+
+                // Collect third-placed teams
+                thirds.push({ ...teams[2], groupName: group.name });
+
+                html += `
+                    <div class="group-container">
+                        <div class="group-title">Gruppe ${group.name}</div>
+                        <table class="group-table">
+                            <tr><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>MF</th><th>P</th></tr>
+                            ${teams.map((t, i) => {
+                                const name = teamNameMap[t.team_id] || `Team ${t.team_id}`;
+                                return `
+                                <tr class="${i < 2 ? 'qualified' : ''}">
+                                    <td><div class="team-row"><img src="${getFlagSrc(name)}" alt="">${name}</div></td>
+                                    <td>${t.mp}</td>
+                                    <td>${t.w}</td>
+                                    <td>${t.d}</td>
+                                    <td>${t.l}</td>
+                                    <td>${t.gf}-${t.ga}</td>
+                                    <td><strong>${t.pts}</strong></td>
+                                </tr>`;
+                            }).join('')}
+                        </table>
+                    </div>`;
+            }
+
+            // Build table of third-placed teams (best 8 of 12 qualify)
+            thirds.sort((a, b) => {
+                if (b.pts !== a.pts) return parseInt(b.pts) - parseInt(a.pts);
+                if (b.gd !== a.gd) return parseInt(b.gd) - parseInt(a.gd);
+                return parseInt(b.gf) - parseInt(a.gf);
+            });
+
+            html += `
+                <div class="group-container">
+                    <div class="group-title">Bedste treere</div>
+                    <table class="group-table">
+                        <tr><th>Gr.</th><th>Hold</th><th>K</th><th>V</th><th>U</th><th>T</th><th>MF</th><th>P</th></tr>
+                        ${thirds.map((t, i) => {
+                            const name = teamNameMap[t.team_id] || `Team ${t.team_id}`;
+                            return `
+                            <tr class="${i < 8 ? 'qualified' : ''}">
+                                <td>${t.groupName}</td>
+                                <td><div class="team-row"><img src="${getFlagSrc(name)}" alt="">${name}</div></td>
+                                <td>${t.mp}</td>
+                                <td>${t.w}</td>
+                                <td>${t.d}</td>
+                                <td>${t.l}</td>
+                                <td>${t.gf}-${t.ga}</td>
+                                <td><strong>${t.pts}</strong></td>
+                            </tr>`;
+                        }).join('')}
+                    </table>
+                </div>`;
+
+            document.getElementById('groups-list').innerHTML = html;
+        }
+
+        async function fetchData() {
+            try {
+                const [groupsRes, gamesRes] = await Promise.all([
+                    fetch(GROUPS_API_URL),
+                    fetch(API_URL)
+                ]);
+                const groupsData = await groupsRes.json();
+                const gamesData = await gamesRes.json();
+                const games = gamesData.games;
+
+                // Build team_id → name map from games data
+                const teamNameMap = {};
+                for (const g of games) {
+                    if (g.home_team_id && g.home_team_name_en) teamNameMap[g.home_team_id] = g.home_team_name_en;
+                    if (g.away_team_id && g.away_team_name_en) teamNameMap[g.away_team_id] = g.away_team_name_en;
+                }
+
+                renderGroups(groupsData.groups, teamNameMap);
+
+                document.getElementById('last-update').textContent =
+                    new Date().toLocaleTimeString('da-DK', { hour: '2-digit', minute: '2-digit' });
+            } catch (err) {
+                console.error('Fejl ved hentning af data:', err);
+                document.getElementById('groups-list').innerHTML =
+                    '<div class="no-matches">Kunne ikke hente data. Prøver igen om 1 time.</div>';
+            }
+        }
+
+        // Initial load
+        fetchData();
+
+        // Refresh every hour (3600000 ms)
+        setInterval(fetchData, 3600000);
+    </script>
+</body>
+</html>
